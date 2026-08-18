@@ -1,6 +1,7 @@
 const Patient = require('../models/Patient');
 const Visit = require('../models/Visit');
 const { asyncHandler } = require('../utils/asyncHandler');
+const { resolveBranchAccess } = require('../utils/branchScope');
 const { MAIN_BRANCH_NAME } = require('../services/branchService');
 
 const generatePatientNumber = () => `PT-${Date.now().toString().slice(-8)}`;
@@ -184,10 +185,12 @@ const searchPatients = asyncHandler(async (req, res) => {
 });
 
 const createPatient = asyncHandler(async (req, res) => {
+  const branchAccess = resolveBranchAccess(req, req.body?.createdBranchName || '');
+
   const patient = await Patient.create(
     toPatientPayload({
       ...req.body,
-      createdBranchName: req.activeUser?.branchName || MAIN_BRANCH_NAME,
+      createdBranchName: branchAccess.branchName || req.activeUser?.branchName || MAIN_BRANCH_NAME,
     })
   );
   res.status(201).json({ success: true, data: serializePatient(patient) });

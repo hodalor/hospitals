@@ -66,6 +66,7 @@ const emptyPatientForm = {
   idFrontImage: '',
   idBackImage: '',
   profilePhoto: '',
+  createdBranchName: 'Main',
   emergencyContacts: [createEmergencyContact()],
 };
 
@@ -78,7 +79,7 @@ function fileToDataUrl(file) {
   });
 }
 
-function PatientsPage({ data, auth, pageMeta }) {
+function PatientsPage({ data, auth, branches, pageMeta }) {
   const [records, setRecords] = useState(data.records || []);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPatientId, setEditingPatientId] = useState(null);
@@ -98,6 +99,19 @@ function PatientsPage({ data, auth, pageMeta }) {
   useEffect(() => {
     setRecords(data.records || []);
   }, [data.records]);
+
+  const activeBranches = useMemo(
+    () => (branches || []).filter((branch) => branch.isActive !== false),
+    [branches]
+  );
+
+  const defaultCreatedBranchName =
+    auth.currentUser?.selectedBranchName ||
+    auth.currentUser?.branchName ||
+    activeBranches[0]?.name ||
+    'Main';
+
+  const canChoosePatientBranch = Boolean(auth.currentUser?.canAccessAllBranches && activeBranches.length > 1);
 
   useEffect(() => {
     if (!editingPatientId || !isModalOpen) {
@@ -177,6 +191,7 @@ function PatientsPage({ data, auth, pageMeta }) {
     setForm({
       ...emptyPatientForm,
       lastVisit: new Date().toISOString().slice(0, 10),
+      createdBranchName: defaultCreatedBranchName,
       emergencyContacts: [createEmergencyContact()],
     });
     setIsModalOpen(true);
@@ -507,6 +522,23 @@ function PatientsPage({ data, auth, pageMeta }) {
                     <option value="Other">Other</option>
                   </select>
                 </label>
+                {canChoosePatientBranch && !editingPatientId ? (
+                  <label className="form-field">
+                    <span>Patient Branch</span>
+                    <select
+                      name="createdBranchName"
+                      value={form.createdBranchName || defaultCreatedBranchName}
+                      onChange={handleChange}
+                      disabled={fieldsDisabled}
+                    >
+                      {activeBranches.map((branch) => (
+                        <option key={branch.id || branch.name} value={branch.name}>
+                          {branch.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null}
                 <label className="form-field">
                   <span>Phone</span>
                   <input

@@ -296,6 +296,8 @@ function SettingsPage({ data, auth, users, onRefreshData, pageMeta }) {
     [brandingForm.currencies, searchValue, statusFilter]
   );
 
+  const canManageCurrencies = Boolean(auth.currentUser?.isMasterTenant && auth.canDoAction('manage_users'));
+
   if (!auth.canViewData('department_records')) {
     return (
       <SectionCard eyebrow="Access control" title="Configuration is restricted">
@@ -428,6 +430,10 @@ function SettingsPage({ data, auth, users, onRefreshData, pageMeta }) {
   };
 
   const openCreateCurrencyModal = () => {
+    if (!canManageCurrencies) {
+      return;
+    }
+
     setSelectedCurrencyIndex(null);
     setCurrencyForm({
       ...emptyCurrencyForm,
@@ -619,6 +625,10 @@ function SettingsPage({ data, auth, users, onRefreshData, pageMeta }) {
   };
 
   const handleCurrencySave = async () => {
+    if (!canManageCurrencies) {
+      return;
+    }
+
     if (!/^[A-Z]{3}$/.test(String(currencyForm.code || '').trim())) {
       showToast('Currency code must be a 3-letter value like GHS or ZMW.', 'error');
       return;
@@ -649,6 +659,10 @@ function SettingsPage({ data, auth, users, onRefreshData, pageMeta }) {
   };
 
   const handleCurrencyDelete = async () => {
+    if (!canManageCurrencies) {
+      return;
+    }
+
     if (selectedCurrencyIndex === null || (brandingForm.currencies || []).length <= 1) {
       return;
     }
@@ -931,7 +945,7 @@ function SettingsPage({ data, auth, users, onRefreshData, pageMeta }) {
             <SectionCard
               title="Currencies"
               actions={
-                auth.canDoAction('manage_users') ? (
+                canManageCurrencies ? (
                   <button type="button" className="primary-button" onClick={openCreateCurrencyModal}>
                     Add Currency
                   </button>
@@ -941,7 +955,11 @@ function SettingsPage({ data, auth, users, onRefreshData, pageMeta }) {
               <DataTable
                 columns={currencyColumns}
                 rows={currencyRows}
-                caption="Currencies are reusable across the tenant. Click any row to open details."
+                caption={
+                  canManageCurrencies
+                    ? 'Currencies are reusable across the tenant. Click any row to open details.'
+                    : 'Currencies assigned by the super admin are shown here for reference.'
+                }
                 emptyMessage="No currencies match the current filters."
                 onRowClick={openCurrencyDetailsModal}
               />
@@ -1129,7 +1147,7 @@ function SettingsPage({ data, auth, users, onRefreshData, pageMeta }) {
               <button type="button" className="secondary-button" onClick={closeCurrencyModal}>
                 Close
               </button>
-              {auth.canDoAction('manage_users') ? (
+              {canManageCurrencies ? (
                 <button type="button" className="primary-button" onClick={() => setIsCurrencyEditing(true)}>
                   Edit Currency
                 </button>
