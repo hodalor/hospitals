@@ -11,7 +11,22 @@ import {
   visitFlowModuleData,
 } from '../data/hospitalData';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000/api';
+function resolveApiBaseUrl() {
+  const configuredBaseUrl = String(process.env.REACT_APP_API_BASE_URL || '').trim();
+
+  if (configuredBaseUrl) {
+    return configuredBaseUrl.replace(/\/$/, '');
+  }
+
+  if (process.env.NODE_ENV === 'development') {
+    return 'http://localhost:5000/api';
+  }
+
+  // Production builds should use the hosted environment variable instead of a localhost fallback.
+  return '/api';
+}
+
+const API_BASE_URL = resolveApiBaseUrl();
 
 function getStoredUser() {
   try {
