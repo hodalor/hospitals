@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: healthnova-backend
+    runtime: node
+    rootDir: frontend/backend
+    buildCommand: npm install
+    startCommand: npm start
+    plan: free
+    healthCheckPath: /
