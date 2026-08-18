@@ -15,7 +15,21 @@ function resolveApiBaseUrl() {
   const configuredBaseUrl = String(process.env.REACT_APP_API_BASE_URL || '').trim();
 
   if (configuredBaseUrl) {
-    return configuredBaseUrl.replace(/\/$/, '');
+    const normalizedBaseUrl = configuredBaseUrl.replace(/\/$/, '');
+
+    try {
+      const parsedUrl = new URL(normalizedBaseUrl);
+
+      if (!parsedUrl.pathname || parsedUrl.pathname === '/') {
+        return `${normalizedBaseUrl}/api`;
+      }
+    } catch (error) {
+      if (!normalizedBaseUrl.endsWith('/api')) {
+        return `${normalizedBaseUrl}/api`;
+      }
+    }
+
+    return normalizedBaseUrl;
   }
 
   if (process.env.NODE_ENV === 'development') {
