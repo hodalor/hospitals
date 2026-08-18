@@ -2,7 +2,7 @@
 
 ## Frontend on Netlify
 
-- Base directory: `frontend/healthnova`
+- Base directory: `frontend`
 - Build command: `npm run build`
 - Publish directory: `build`
 - Environment variable:
@@ -12,7 +12,7 @@
 
 ## Backend on Render
 
-- Root directory: `frontend/backend`
+- Root directory: `backend`
 - Build command: `npm install`
 - Start command: `npm start`
 
