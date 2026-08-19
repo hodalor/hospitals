@@ -2,6 +2,10 @@ function normalizeBranchName(value = '') {
   return String(value || '').trim();
 }
 
+function escapeRegex(value = '') {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function hasAllBranchAccess(user) {
   return Boolean(user?.isSuperAdmin || user?.role === 'Admin' || user?.role === 'Super Admin');
 }
@@ -34,7 +38,7 @@ function buildBranchFilter(req, field = 'branchName', overrideBranchName = '') {
   }
 
   return {
-    [field]: branchAccess.branchName,
+    [field]: new RegExp(`^${escapeRegex(branchAccess.branchName)}$`, 'i'),
   };
 }
 

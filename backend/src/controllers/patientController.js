@@ -1,7 +1,7 @@
 const Patient = require('../models/Patient');
 const Visit = require('../models/Visit');
 const { asyncHandler } = require('../utils/asyncHandler');
-const { buildBranchFilter, resolveBranchAccess } = require('../utils/branchScope');
+const { buildBranchFilter, normalizeBranchName, resolveBranchAccess } = require('../utils/branchScope');
 const { MAIN_BRANCH_NAME } = require('../services/branchService');
 
 const generatePatientNumber = () => `PT-${Date.now().toString().slice(-8)}`;
@@ -69,7 +69,7 @@ const serializePatient = (patient) => ({
   gender: patient.gender,
   phone: patient.contact?.phone || '',
   department: patient.currentDepartment || '',
-  createdBranchName: patient.createdBranchName || MAIN_BRANCH_NAME,
+  createdBranchName: normalizeBranchName(patient.createdBranchName) || MAIN_BRANCH_NAME,
   lastVisit: patient.lastVisit ? new Date(patient.lastVisit).toISOString().slice(0, 10) : '',
   dob: patient.dateOfBirth ? new Date(patient.dateOfBirth).toISOString().slice(0, 10) : '',
   idCardType: patient.idCardType || '',
@@ -109,6 +109,7 @@ const toPatientPayload = (payload) => {
   const [firstName = '', ...restName] = (payload.name || '').trim().split(/\s+/);
   const lastName = restName.join(' ') || 'Patient';
   const emergencyContacts = normalizeEmergencyContacts(payload.emergencyContacts);
+  const normalizedBranchName = normalizeBranchName(payload.createdBranchName) || MAIN_BRANCH_NAME;
 
   validateEmergencyContacts(emergencyContacts);
 
@@ -129,7 +130,7 @@ const toPatientPayload = (payload) => {
     },
     emergencyContacts,
     currentDepartment: payload.department,
-    createdBranchName: payload.createdBranchName || MAIN_BRANCH_NAME,
+    createdBranchName: normalizedBranchName,
     lastVisit: payload.lastVisit || undefined,
     visitReason: payload.visitReason,
     currentStatus: payload.status,
@@ -190,7 +191,10 @@ const createPatient = asyncHandler(async (req, res) => {
   const patient = await Patient.create(
     toPatientPayload({
       ...req.body,
-      createdBranchName: branchAccess.branchName || req.activeUser?.branchName || MAIN_BRANCH_NAME,
+      createdBranchName:
+        normalizeBranchName(branchAccess.branchName) ||
+        normalizeBranchName(req.activeUser?.branchName) ||
+        MAIN_BRANCH_NAME,
     })
   );
   res.status(201).json({ success: true, data: serializePatient(patient) });

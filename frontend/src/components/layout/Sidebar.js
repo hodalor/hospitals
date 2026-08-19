@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import HospitalMark from '../common/HospitalMark';
 
 const iconMap = {
   dashboard: '◫',
@@ -72,7 +73,7 @@ function Sidebar({ modules, activeModuleId, onNavigate }) {
   return (
     <aside className="sidebar">
       <div className="sidebar-brand">
-        <div className="brand-badge">HN</div>
+        <HospitalMark className="sidebar-brand-mark" />
         <div>
           <h2>HealthNova</h2>
           <p>Hospital manager</p>

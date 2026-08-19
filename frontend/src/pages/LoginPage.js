@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import HospitalMark from '../components/common/HospitalMark';
 
 function LoginPage({ onLogin, isLoading }) {
   const [hospitalId, setHospitalId] = useState('master');
@@ -14,18 +15,7 @@ function LoginPage({ onLogin, isLoading }) {
     <div className="login-shell">
       <div className="login-card">
         <div className="login-brand">
-          <div className="login-brand-mark" aria-hidden="true">
-            <div className="login-brand-cross">
-              <span />
-              <span />
-            </div>
-            <div className="login-brand-stethoscope">
-              <span className="login-stethoscope-tube" />
-              <span className="login-stethoscope-ear login-stethoscope-ear-left" />
-              <span className="login-stethoscope-ear login-stethoscope-ear-right" />
-              <span className="login-stethoscope-chest" />
-            </div>
-          </div>
+          <HospitalMark className="login-brand-mark" />
           <div>
             <h1>HealthNova HMS</h1>
           </div>
