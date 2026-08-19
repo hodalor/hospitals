@@ -1,6 +1,15 @@
 .table-shell {
   display: grid;
   gap: 0.75rem;
+  position: relative;
+}
+
+.table-shell::before {
+  content: '';
+  display: block;
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #7254ff 0%, #ef476f 25%, #f7b32b 50%, #15b3a7 75%, #1570ef 100%);
 }
 
 .table-caption {
@@ -13,6 +22,7 @@
   overflow: auto;
   border-radius: 18px;
   border: 1px solid rgba(16, 35, 63, 0.08);
+  box-shadow: 0 16px 36px rgba(16, 35, 63, 0.08);
 }
 
 .data-table {
@@ -31,8 +41,28 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #5d7493;
+  color: #324a67;
   background: #f7faff;
+}
+
+.data-table thead th:nth-child(5n + 1) {
+  background: rgba(114, 84, 255, 0.11);
+}
+
+.data-table thead th:nth-child(5n + 2) {
+  background: rgba(239, 71, 111, 0.11);
+}
+
+.data-table thead th:nth-child(5n + 3) {
+  background: rgba(247, 179, 43, 0.16);
+}
+
+.data-table thead th:nth-child(5n + 4) {
+  background: rgba(15, 181, 174, 0.12);
+}
+
+.data-table thead th:nth-child(5n + 5) {
+  background: rgba(21, 112, 239, 0.11);
 }
 
 .data-table tbody td {
@@ -49,6 +79,22 @@
 
 .data-table tbody tr:nth-child(even) {
   background: rgba(247, 250, 255, 0.66);
+}
+
+.data-table tbody tr:nth-child(4n + 1) td:first-child {
+  box-shadow: inset 4px 0 0 rgba(114, 84, 255, 0.6);
+}
+
+.data-table tbody tr:nth-child(4n + 2) td:first-child {
+  box-shadow: inset 4px 0 0 rgba(239, 71, 111, 0.6);
+}
+
+.data-table tbody tr:nth-child(4n + 3) td:first-child {
+  box-shadow: inset 4px 0 0 rgba(247, 179, 43, 0.7);
+}
+
+.data-table tbody tr:nth-child(4n + 4) td:first-child {
+  box-shadow: inset 4px 0 0 rgba(15, 181, 174, 0.65);
 }
 
 .data-table tbody tr:hover {

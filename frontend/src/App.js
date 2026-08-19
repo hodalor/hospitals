@@ -6,6 +6,10 @@ import SubscriptionGate from './components/subscription/SubscriptionGate';
 import LoginPage from './pages/LoginPage';
 import './styles/app.css';
 
+function hasOwnSelectedBranch(user) {
+  return Object.prototype.hasOwnProperty.call(user || {}, 'selectedBranchName');
+}
+
 function AppContent() {
   const [currentUser, setCurrentUser] = useState(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -14,13 +18,16 @@ function AppContent() {
 
   const persistUser = (user) => {
     const storedUser = window.localStorage.getItem('healthnova_user');
-    let preservedSelectedBranchName = '';
+    let preservedSelectedBranchName;
 
     if (storedUser) {
       try {
-        preservedSelectedBranchName = JSON.parse(storedUser)?.selectedBranchName || '';
+        const parsedStoredUser = JSON.parse(storedUser);
+        preservedSelectedBranchName = hasOwnSelectedBranch(parsedStoredUser)
+          ? parsedStoredUser.selectedBranchName ?? ''
+          : undefined;
       } catch (error) {
-        preservedSelectedBranchName = '';
+        preservedSelectedBranchName = undefined;
       }
     }
 
@@ -28,7 +35,11 @@ function AppContent() {
       ...user,
       selectedBranchName:
         user?.canAccessAllBranches
-          ? user?.selectedBranchName || preservedSelectedBranchName || user?.branchName || ''
+          ? hasOwnSelectedBranch(user)
+            ? user?.selectedBranchName ?? ''
+            : preservedSelectedBranchName !== undefined
+              ? preservedSelectedBranchName
+              : user?.branchName || ''
           : user?.branchName || '',
     };
 

@@ -14,17 +14,22 @@ function LoginPage({ onLogin, isLoading }) {
     <div className="login-shell">
       <div className="login-card">
         <div className="login-brand">
-          <div className="brand-badge">HN</div>
+          <div className="login-brand-mark" aria-hidden="true">
+            <div className="login-brand-cross">
+              <span />
+              <span />
+            </div>
+            <div className="login-brand-stethoscope">
+              <span className="login-stethoscope-tube" />
+              <span className="login-stethoscope-ear login-stethoscope-ear-left" />
+              <span className="login-stethoscope-ear login-stethoscope-ear-right" />
+              <span className="login-stethoscope-chest" />
+            </div>
+          </div>
           <div>
-            <p className="eyebrow">HealthNova HMS</p>
-            <h1>Sign in to continue</h1>
+            <h1>HealthNova HMS</h1>
           </div>
         </div>
-
-        <p className="login-copy">
-          Sign in with your hospital ID, username, and PIN to access the menus, data, and actions
-          assigned to your tenant account.
-        </p>
 
         <form className="entity-form" onSubmit={handleSubmit}>
           <label className="form-field">

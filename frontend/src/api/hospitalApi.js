@@ -51,6 +51,18 @@ function getStoredUser() {
   }
 }
 
+function resolveSelectedBranchHeader(user) {
+  if (!user) {
+    return '';
+  }
+
+  if (Object.prototype.hasOwnProperty.call(user, 'selectedBranchName')) {
+    return user.selectedBranchName ?? '';
+  }
+
+  return user.branchName || '';
+}
+
 function buildFallbackDepartmentCategories(registry = []) {
   const counts = registry.reduce((accumulator, department) => {
     const categoryName = String(department.category || '').trim();
@@ -83,7 +95,7 @@ async function request(path, options = {}) {
     ? {
         'x-hospital-id': currentUser.hospitalId || 'master',
         'x-user-username': currentUser.username || '',
-        'x-branch-name': currentUser.selectedBranchName || currentUser.branchName || '',
+        'x-branch-name': resolveSelectedBranchHeader(currentUser),
       }
     : {};
 

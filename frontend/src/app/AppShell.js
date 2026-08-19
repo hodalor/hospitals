@@ -139,6 +139,7 @@ function AppShell({ currentUser, onLogout, onUserChange }) {
   const [moduleData, setModuleData] = useState(defaultModuleData);
   const [users, setUsers] = useState(userModuleData.records);
   const [showSubscriptionExtend, setShowSubscriptionExtend] = useState(false);
+  const [isBranchLoading, setIsBranchLoading] = useState(false);
   const { showToast } = useToast();
 
   const loadModuleData = useCallback(async () => {
@@ -231,7 +232,7 @@ function AppShell({ currentUser, onLogout, onUserChange }) {
     return () => {
       isMounted = false;
     };
-  }, [currentUser?.isMasterTenant, currentUser?.isSuperAdmin, currentUser?.selectedBranchName]);
+  }, [currentUser?.isMasterTenant, currentUser?.isSuperAdmin]);
 
   useEffect(() => {
     let isMounted = true;
@@ -328,16 +329,33 @@ function AppShell({ currentUser, onLogout, onUserChange }) {
     : currentUser?.branchName
       ? [{ id: 'current-branch', name: currentUser.branchName, isMain: true, isActive: true }]
       : [];
+  const activeBranchLabel =
+    currentUser?.canAccessAllBranches && !currentUser?.selectedBranchName
+      ? 'All Branches'
+      : currentUser?.selectedBranchName || currentUser?.branchName || 'Main';
 
   const handleBranchChange = async (selectedBranchName) => {
     if (!onUserChange) {
       return;
     }
 
-    onUserChange({
+    const nextUser = {
       ...currentUser,
       selectedBranchName,
-    });
+    };
+
+    setIsBranchLoading(true);
+    onUserChange(nextUser);
+
+    try {
+      await loadModuleData();
+    } catch (error) {
+      showToast(error.message || 'Unable to load the selected branch data.', 'error');
+    } finally {
+      window.setTimeout(() => {
+        setIsBranchLoading(false);
+      }, 250);
+    }
   };
 
   if (showSubscriptionExtend) {
@@ -359,6 +377,31 @@ function AppShell({ currentUser, onLogout, onUserChange }) {
 
   return (
     <div className="app-shell">
+      {isBranchLoading ? (
+        <div className="branch-loading-overlay" role="status" aria-live="polite" aria-busy="true">
+          <div className="branch-loading-card">
+            <div className="branch-loading-illustration">
+              <div className="branch-loading-halo" />
+              <div className="branch-loading-cross">
+                <span />
+                <span />
+              </div>
+              <div className="branch-loading-stethoscope">
+                <span className="branch-loading-stethoscope-tube" />
+                <span className="branch-loading-stethoscope-ear branch-loading-stethoscope-ear-left" />
+                <span className="branch-loading-stethoscope-ear branch-loading-stethoscope-ear-right" />
+                <span className="branch-loading-stethoscope-chest" />
+              </div>
+              <div className="branch-loading-pulse">
+                <span />
+                <span />
+                <span />
+              </div>
+            </div>
+            <span className="sr-only">Loading {activeBranchLabel}</span>
+          </div>
+        </div>
+      ) : null}
       <Header
         currentUser={currentUser}
         branding={branding}

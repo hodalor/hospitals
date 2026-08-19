@@ -155,6 +155,10 @@ function BillingPage({ data, auth, pricingItems, branches, pageMeta }) {
   const { showToast } = useToast();
   const currentUserName = auth.currentUser?.fullName || auth.currentUser?.role || 'Finance';
   const branding = useMemo(() => data.branding || {}, [data.branding]);
+  const activeBranchDisplay =
+    auth.currentUser?.canAccessAllBranches && !auth.currentUser?.selectedBranchName
+      ? 'All Branches'
+      : auth.currentUser?.selectedBranchName || auth.currentUser?.branchName || 'Main';
 
   useEffect(() => {
     setTransactions(data.transactions);
@@ -689,7 +693,6 @@ function BillingPage({ data, auth, pricingItems, branches, pageMeta }) {
       <Modal
         isOpen={invoiceModalOpen}
         title={editingInvoiceId ? 'Edit Invoice' : 'Create Invoice'}
-        subtitle="Finance staff can update payment status directly from the billing list."
         onClose={closeInvoiceModal}
       >
         <form className="entity-form" onSubmit={handleInvoiceSubmit}>
@@ -699,7 +702,7 @@ function BillingPage({ data, auth, pricingItems, branches, pageMeta }) {
                 { label: 'Invoice No', value: invoiceForm.invoiceNo || 'Auto-generated on save' },
                 { label: 'Patient', value: invoiceForm.patient || 'Select patient' },
                 { label: 'Patient ID', value: invoiceForm.patientId },
-                { label: 'Branch', value: auth.currentUser?.selectedBranchName || auth.currentUser?.branchName || 'Main' },
+                { label: 'Branch', value: activeBranchDisplay },
                 { label: 'Invoice Type', value: invoiceForm.invoiceType },
                 { label: 'Status', value: invoiceForm.status },
                 { label: 'Department', value: invoiceForm.department || 'Auto from items' },
@@ -767,76 +770,89 @@ function BillingPage({ data, auth, pricingItems, branches, pageMeta }) {
               </div>
 
               {invoiceForm.invoiceItems.length ? (
-                <div className="line-item-stack">
-                  {invoiceForm.invoiceItems.map((item, index) => (
-                    <div className="line-item-card" key={`invoice-item-${index}`}>
-                      <div className="form-grid">
-                        <label className="form-field form-field-full">
-                          <span>Service / Medication</span>
-                          <input
-                            list="finance-service-options"
-                            value={item.itemName}
-                            onChange={(event) =>
-                              handleInvoiceItemChange(index, 'itemName', event.target.value)
-                            }
-                            placeholder="Search service or medication"
-                            required
-                          />
-                        </label>
-                        <label className="form-field">
-                          <span>Type</span>
-                          <input value={item.itemType || 'Service'} disabled />
-                        </label>
-                        <label className="form-field">
-                          <span>Category</span>
-                          <input value={item.category || ''} disabled />
-                        </label>
-                        <label className="form-field">
-                          <span>Department</span>
-                          <input value={item.department || ''} disabled />
-                        </label>
-                        <label className="form-field">
-                          <span>Quantity</span>
-                          <input
-                            type="number"
-                            min="1"
-                            step="1"
-                            value={item.quantity}
-                            onChange={(event) =>
-                              handleInvoiceItemChange(index, 'quantity', event.target.value)
-                            }
-                            required
-                          />
-                        </label>
-                        <label className="form-field">
-                          <span>Unit Price</span>
-                          <input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value={item.unitPrice}
-                            onChange={(event) =>
-                              handleInvoiceItemChange(index, 'unitPrice', event.target.value)
-                            }
-                            required
-                          />
-                        </label>
-                        <label className="form-field">
-                          <span>Line Total</span>
-                          <input value={Number(item.lineTotal || 0).toLocaleString()} disabled />
-                        </label>
-                      </div>
-                      {invoiceForm.invoiceItems.length > 1 ? (
-                        <button
-                          type="button"
-                          className="text-button"
-                          onClick={() => removeInvoiceItem(index)}
-                        >
-                          Remove
-                        </button>
-                      ) : null}
-                    </div>
-                  ))}
+                <div className="invoice-items-editor">
+                  <div className="table-scroll invoice-items-table-scroll">
+                    <table className="data-table invoice-items-table">
+                      <thead>
+                        <tr>
+                          <th>Service / Medication</th>
+                          <th>Type</th>
+                          <th>Category</th>
+                          <th>Department</th>
+                          <th>Qty</th>
+                          <th>Unit Price</th>
+                          <th>Line Total</th>
+                          <th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {invoiceForm.invoiceItems.map((item, index) => (
+                          <tr key={`invoice-item-${index}`}>
+                            <td>
+                              <input
+                                list="finance-service-options"
+                                value={item.itemName}
+                                onChange={(event) =>
+                                  handleInvoiceItemChange(index, 'itemName', event.target.value)
+                                }
+                                placeholder="Search service or medication"
+                                required
+                              />
+                            </td>
+                            <td>
+                              <input value={item.itemType || 'Service'} disabled />
+                            </td>
+                            <td>
+                              <input value={item.category || ''} disabled />
+                            </td>
+                            <td>
+                              <input value={item.department || ''} disabled />
+                            </td>
+                            <td>
+                              <input
+                                type="number"
+                                min="1"
+                                step="1"
+                                value={item.quantity}
+                                onChange={(event) =>
+                                  handleInvoiceItemChange(index, 'quantity', event.target.value)
+                                }
+                                required
+                              />
+                            </td>
+                            <td>
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={item.unitPrice}
+                                onChange={(event) =>
+                                  handleInvoiceItemChange(index, 'unitPrice', event.target.value)
+                                }
+                                required
+                              />
+                            </td>
+                            <td>
+                              <input value={Number(item.lineTotal || 0).toLocaleString()} disabled />
+                            </td>
+                            <td>
+                              {invoiceForm.invoiceItems.length > 1 ? (
+                                <button
+                                  type="button"
+                                  className="text-button"
+                                  onClick={() => removeInvoiceItem(index)}
+                                >
+                                  Remove
+                                </button>
+                              ) : (
+                                <span className="helper-text">-</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               ) : null}
             </div>

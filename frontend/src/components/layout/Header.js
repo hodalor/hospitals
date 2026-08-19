@@ -18,7 +18,10 @@ function Header({
     : null;
   const msLeft = subscriptionExpiry ? subscriptionExpiry.getTime() - Date.now() : 0;
   const daysLeft = subscriptionExpiry ? Math.max(0, Math.ceil(msLeft / (1000 * 60 * 60 * 24))) : 0;
-  const selectedBranchName = currentUser?.selectedBranchName || currentUser?.branchName || '';
+  const hasSelectedBranchName = Object.prototype.hasOwnProperty.call(currentUser || {}, 'selectedBranchName');
+  const selectedBranchName = hasSelectedBranchName
+    ? currentUser?.selectedBranchName ?? ''
+    : currentUser?.branchName || '';
   const branchValue = currentUser?.canAccessAllBranches ? selectedBranchName : currentUser?.branchName || '';
   const showExtendButton =
     !currentUser?.isMasterTenant &&

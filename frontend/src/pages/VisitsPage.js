@@ -246,6 +246,10 @@ function VisitsPage({ data, auth, users, departments, pricingItems, branches, on
   const canEditChiefComplaint = canAssignClinician || canManageClinicalFields;
   const canCloseVisit = isAdminUser || canManageClinicalFields;
   const canEditWorkflowLists = !isReadOnlyVisit;
+  const activeBranchDisplay =
+    auth.currentUser?.canAccessAllBranches && !auth.currentUser?.selectedBranchName
+      ? 'All Branches'
+      : auth.currentUser?.selectedBranchName || auth.currentUser?.branchName || 'Main';
 
   useEffect(() => {
     setRecords(data.records || []);
@@ -1030,7 +1034,7 @@ function VisitsPage({ data, auth, users, departments, pricingItems, branches, on
                       { label: 'Visit Number', value: form.visitNo || 'Auto-generated on save' },
                       { label: 'Patient', value: form.patient },
                       { label: 'Current Stage', value: derivedStage },
-                      { label: 'Branch', value: auth.currentUser?.selectedBranchName || auth.currentUser?.branchName || 'Main' },
+                      { label: 'Branch', value: activeBranchDisplay },
                       { label: 'Billing', value: form.billing || 'Pending' },
                       { label: 'Department', value: form.department || 'Not assigned' },
                       { label: 'Clinician', value: form.clinician || 'Not assigned' },
