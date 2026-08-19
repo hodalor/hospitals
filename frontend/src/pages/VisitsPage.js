@@ -212,7 +212,7 @@ function normalizeVisitForForm(visit) {
   };
 }
 
-function VisitsPage({ data, auth, users, departments, pricingItems, onRefreshData, pageMeta }) {
+function VisitsPage({ data, auth, users, departments, pricingItems, branches, onRefreshData, pageMeta }) {
   const [records, setRecords] = useState(data.records || []);
   const [catalogRecords, setCatalogRecords] = useState(pricingItems || []);
   const [form, setForm] = useState(emptyVisitForm);
@@ -222,6 +222,7 @@ function VisitsPage({ data, auth, users, departments, pricingItems, onRefreshDat
   const [isSaving, setIsSaving] = useState(false);
   const [searchValue, setSearchValue] = useState('');
   const [stageFilter, setStageFilter] = useState('all');
+  const [branchFilter, setBranchFilter] = useState('all');
   const [startDateFilter, setStartDateFilter] = useState('');
   const [endDateFilter, setEndDateFilter] = useState('');
   const [patientLookup, setPatientLookup] = useState('');
@@ -268,6 +269,14 @@ function VisitsPage({ data, auth, users, departments, pricingItems, onRefreshDat
         .filter((department) => department.isActive)
         .sort((left, right) => left.name.localeCompare(right.name)),
     [departments]
+  );
+
+  const activeBranches = useMemo(
+    () =>
+      (branches || [])
+        .filter((branch) => branch.isActive !== false)
+        .sort((left, right) => left.name.localeCompare(right.name)),
+    [branches]
   );
 
   const serviceCatalog = useMemo(
@@ -338,10 +347,11 @@ function VisitsPage({ data, auth, users, departments, pricingItems, onRefreshDat
           .toLowerCase()
           .includes(searchValue.toLowerCase());
         const matchesStage = stageFilter === 'all' || visit.stage === stageFilter;
+        const matchesBranch = branchFilter === 'all' || visit.branchName === branchFilter;
         const matchesDate = isWithinDateRange(visit.createdAt, startDateFilter, endDateFilter);
-        return matchesSearch && matchesStage && matchesDate;
+        return matchesSearch && matchesStage && matchesBranch && matchesDate;
       }),
-    [records, searchValue, stageFilter, startDateFilter, endDateFilter]
+    [records, searchValue, stageFilter, branchFilter, startDateFilter, endDateFilter]
   );
 
   const summaryCards = useMemo(
@@ -922,6 +932,19 @@ function VisitsPage({ data, auth, users, departments, pricingItems, onRefreshDat
                 ...data.stages.map((stage) => ({ label: stage, value: stage })),
               ],
             },
+            ...(activeBranches.length > 1
+              ? [
+                  {
+                    label: 'Branch',
+                    value: branchFilter,
+                    onChange: setBranchFilter,
+                    options: [
+                      { label: 'All branches', value: 'all' },
+                      ...activeBranches.map((branch) => ({ label: branch.name, value: branch.name })),
+                    ],
+                  },
+                ]
+              : []),
             {
               label: 'From date',
               value: startDateFilter,

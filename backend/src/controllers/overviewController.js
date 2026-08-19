@@ -11,6 +11,8 @@ const { buildBranchFilter } = require('../utils/branchScope');
 
 const getOverview = asyncHandler(async (req, res) => {
   const branchFilter = buildBranchFilter(req);
+  const patientBranchFilter = buildBranchFilter(req, 'createdBranchName');
+  const userBranchFilter = buildBranchFilter(req, 'branchName');
   const [
     patientCount,
     activeVisits,
@@ -22,10 +24,10 @@ const getOverview = asyncHandler(async (req, res) => {
     visits,
     appointments,
   ] = await Promise.all([
-    Patient.countDocuments(),
+    Patient.countDocuments(patientBranchFilter),
     Visit.countDocuments({ visitStatus: { $ne: 'Closed' }, ...branchFilter }),
     Appointment.countDocuments(branchFilter),
-    User.countDocuments(),
+    User.countDocuments(userBranchFilter),
     Invoice.find(branchFilter),
     Payment.find(branchFilter),
     Prescription.find(branchFilter),

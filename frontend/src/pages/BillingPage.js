@@ -133,7 +133,7 @@ const emptyPrescriptionForm = {
   paymentState: 'Pending',
 };
 
-function BillingPage({ data, auth, pricingItems, pageMeta }) {
+function BillingPage({ data, auth, pricingItems, branches, pageMeta }) {
   const [transactions, setTransactions] = useState(data.transactions);
   const [pharmacyQueue, setPharmacyQueue] = useState(data.pharmacyQueue);
   const [invoiceForm, setInvoiceForm] = useState(emptyInvoiceForm);
@@ -146,6 +146,7 @@ function BillingPage({ data, auth, pricingItems, pageMeta }) {
   const [activeTab, setActiveTab] = useState('invoices');
   const [searchValue, setSearchValue] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [branchFilter, setBranchFilter] = useState('all');
   const [startDateFilter, setStartDateFilter] = useState('');
   const [endDateFilter, setEndDateFilter] = useState('');
   const [patientLookup, setPatientLookup] = useState('');
@@ -187,6 +188,14 @@ function BillingPage({ data, auth, pricingItems, pageMeta }) {
         (item) => item.isActive && !(item.itemType === 'Service' && item.catalogSection === 'Diagnosis')
       ),
     [pricingItems]
+  );
+
+  const activeBranches = useMemo(
+    () =>
+      (branches || [])
+        .filter((branch) => branch.isActive !== false)
+        .sort((left, right) => left.name.localeCompare(right.name)),
+    [branches]
   );
 
   const transactionColumns = useMemo(
@@ -279,10 +288,11 @@ function BillingPage({ data, auth, pricingItems, pageMeta }) {
           .toLowerCase()
           .includes(searchValue.toLowerCase());
         const matchesStatus = statusFilter === 'all' || invoice.status === statusFilter;
+        const matchesBranch = branchFilter === 'all' || invoice.branchName === branchFilter;
         const matchesDate = isWithinDateRange(invoice.createdAt || invoice.date, startDateFilter, endDateFilter);
-        return matchesSearch && matchesStatus && matchesDate;
+        return matchesSearch && matchesStatus && matchesBranch && matchesDate;
       }),
-    [transactions, searchValue, statusFilter, startDateFilter, endDateFilter]
+    [transactions, searchValue, statusFilter, branchFilter, startDateFilter, endDateFilter]
   );
 
   const filteredPrescriptions = useMemo(
@@ -296,14 +306,15 @@ function BillingPage({ data, auth, pricingItems, pageMeta }) {
           statusFilter === 'all' ||
           prescription.paymentState === statusFilter ||
           prescription.stockCheck === statusFilter;
+        const matchesBranch = branchFilter === 'all' || prescription.branchName === branchFilter;
         const matchesDate = isWithinDateRange(
           prescription.createdAt || prescription.date,
           startDateFilter,
           endDateFilter
         );
-        return matchesSearch && matchesStatus && matchesDate;
+        return matchesSearch && matchesStatus && matchesBranch && matchesDate;
       }),
-    [pharmacyQueue, searchValue, statusFilter, startDateFilter, endDateFilter]
+    [pharmacyQueue, searchValue, statusFilter, branchFilter, startDateFilter, endDateFilter]
   );
 
   if (!auth.canViewData('billing_records')) {
@@ -628,6 +639,19 @@ function BillingPage({ data, auth, pricingItems, pageMeta }) {
               onChange: setStatusFilter,
               options: filterOptions,
             },
+            ...(activeBranches.length > 1
+              ? [
+                  {
+                    label: 'Branch',
+                    value: branchFilter,
+                    onChange: setBranchFilter,
+                    options: [
+                      { label: 'All branches', value: 'all' },
+                      ...activeBranches.map((branch) => ({ label: branch.name, value: branch.name })),
+                    ],
+                  },
+                ]
+              : []),
             {
               label: 'From date',
               value: startDateFilter,

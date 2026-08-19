@@ -72,6 +72,7 @@ function UsersPage({ data, auth, users, departments, branches, onUsersChange, pa
   const [records, setRecords] = useState(data.records || []);
   const [searchValue, setSearchValue] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
+  const [branchFilter, setBranchFilter] = useState('all');
   const [form, setForm] = useState(emptyUserForm);
   const [editingUserId, setEditingUserId] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -141,9 +142,10 @@ function UsersPage({ data, auth, users, departments, branches, onUsersChange, pa
           .toLowerCase()
           .includes(searchValue.toLowerCase());
         const matchesRole = roleFilter === 'all' || user.role === roleFilter;
-        return matchesSearch && matchesRole;
+        const matchesBranch = branchFilter === 'all' || user.branchName === branchFilter;
+        return matchesSearch && matchesRole && matchesBranch;
       }),
-    [records, searchValue, roleFilter]
+    [records, searchValue, roleFilter, branchFilter]
   );
 
   const summaryCards = useMemo(
@@ -321,6 +323,19 @@ function UsersPage({ data, auth, users, departments, branches, onUsersChange, pa
                 ...visibleRoleOptions.map((role) => ({ label: role, value: role })),
               ],
             },
+            ...(activeBranches.length > 1
+              ? [
+                  {
+                    label: 'Branch',
+                    value: branchFilter,
+                    onChange: setBranchFilter,
+                    options: [
+                      { label: 'All branches', value: 'all' },
+                      ...activeBranches.map((branch) => ({ label: branch.name, value: branch.name })),
+                    ],
+                  },
+                ]
+              : []),
           ]}
         />
 

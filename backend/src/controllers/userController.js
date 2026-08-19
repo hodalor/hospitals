@@ -8,7 +8,7 @@ const Branch = require('../models/Branch');
 const { getTenantPermissionScope } = require('../config/permissionCatalog');
 const { buildSessionPayload, resolveQueuePermissions } = require('../utils/sessionPayload');
 const { MAIN_BRANCH_NAME } = require('../services/branchService');
-const { hasAllBranchAccess, normalizeBranchName } = require('../utils/branchScope');
+const { buildBranchFilter, hasAllBranchAccess, normalizeBranchName } = require('../utils/branchScope');
 
 const serializeUser = (user) =>
   buildSessionPayload({
@@ -106,7 +106,7 @@ const getCurrentSession = asyncHandler(async (req, res) => {
 });
 
 const getUsers = asyncHandler(async (req, res) => {
-  const users = await User.find().sort({ createdAt: -1 });
+  const users = await User.find(buildBranchFilter(req, 'branchName')).sort({ createdAt: -1 });
   res.json({
     success: true,
     data: users.map((user) =>

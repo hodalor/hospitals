@@ -29,7 +29,7 @@ function resolveBranchAccess(req, overrideBranchName = '') {
 function buildBranchFilter(req, field = 'branchName', overrideBranchName = '') {
   const branchAccess = resolveBranchAccess(req, overrideBranchName);
 
-  if (branchAccess.allBranches || !branchAccess.branchName) {
+  if (!branchAccess.branchName) {
     return {};
   }
 

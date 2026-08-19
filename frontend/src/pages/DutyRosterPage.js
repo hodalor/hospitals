@@ -13,6 +13,7 @@ const dutyColumns = [
   { key: 'dutyDate', header: 'Date' },
   { key: 'shift', header: 'Shift', badge: true },
   { key: 'staffName', header: 'Staff' },
+  { key: 'branchName', header: 'Branch' },
   { key: 'role', header: 'Role' },
   { key: 'department', header: 'Department' },
   { key: 'status', header: 'Status', badge: true },
@@ -34,7 +35,7 @@ const emptyDutyForm = {
   notes: '',
 };
 
-function DutyRosterPage({ data, auth, users, pageMeta }) {
+function DutyRosterPage({ data, auth, users, branches, pageMeta }) {
   const [records, setRecords] = useState(data.records || []);
   const [form, setForm] = useState(emptyDutyForm);
   const [editingEntryId, setEditingEntryId] = useState(null);
@@ -43,6 +44,7 @@ function DutyRosterPage({ data, auth, users, pageMeta }) {
   const [searchValue, setSearchValue] = useState('');
   const [shiftFilter, setShiftFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [branchFilter, setBranchFilter] = useState('all');
   const [startDateFilter, setStartDateFilter] = useState('');
   const [endDateFilter, setEndDateFilter] = useState('');
   const { showToast } = useToast();
@@ -56,6 +58,14 @@ function DutyRosterPage({ data, auth, users, pageMeta }) {
     [users]
   );
 
+  const activeBranches = useMemo(
+    () =>
+      (branches || [])
+        .filter((branch) => branch.isActive !== false)
+        .sort((left, right) => left.name.localeCompare(right.name)),
+    [branches]
+  );
+
   const filteredRecords = useMemo(
     () =>
       records.filter((entry) => {
@@ -65,10 +75,11 @@ function DutyRosterPage({ data, auth, users, pageMeta }) {
           .includes(searchValue.toLowerCase());
         const matchesShift = shiftFilter === 'all' || entry.shift === shiftFilter;
         const matchesStatus = statusFilter === 'all' || entry.status === statusFilter;
+        const matchesBranch = branchFilter === 'all' || entry.branchName === branchFilter;
         const matchesDate = isWithinDateRange(entry.dutyDate, startDateFilter, endDateFilter);
-        return matchesSearch && matchesShift && matchesStatus && matchesDate;
+        return matchesSearch && matchesShift && matchesStatus && matchesBranch && matchesDate;
       }),
-    [records, searchValue, shiftFilter, statusFilter, startDateFilter, endDateFilter]
+    [records, searchValue, shiftFilter, statusFilter, branchFilter, startDateFilter, endDateFilter]
   );
 
   const summaryCards = useMemo(
@@ -189,6 +200,19 @@ function DutyRosterPage({ data, auth, users, pageMeta }) {
                 { label: 'On leave', value: 'On leave' },
               ],
             },
+            ...(activeBranches.length > 1
+              ? [
+                  {
+                    label: 'Branch',
+                    value: branchFilter,
+                    onChange: setBranchFilter,
+                    options: [
+                      { label: 'All branches', value: 'all' },
+                      ...activeBranches.map((branch) => ({ label: branch.name, value: branch.name })),
+                    ],
+                  },
+                ]
+              : []),
             {
               label: 'From date',
               value: startDateFilter,

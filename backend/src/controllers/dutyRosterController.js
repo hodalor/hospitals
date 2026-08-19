@@ -1,6 +1,7 @@
 const DutyRosterEntry = require('../models/DutyRosterEntry');
 const User = require('../models/User');
 const { asyncHandler } = require('../utils/asyncHandler');
+const { resolveBranchAccess } = require('../utils/branchScope');
 
 const serializeDutyRosterEntry = (entry) => ({
   id: entry._id,
@@ -8,6 +9,7 @@ const serializeDutyRosterEntry = (entry) => ({
   staffName: entry.staffUser?.fullName || entry.staffName,
   role: entry.staffUser?.role || entry.role,
   department: entry.staffUser?.department || entry.department,
+  branchName: entry.staffUser?.branchName || '',
   dutyDate: entry.dutyDate ? new Date(entry.dutyDate).toISOString().slice(0, 10) : '',
   shift: entry.shift,
   status: entry.status,
@@ -17,11 +19,17 @@ const serializeDutyRosterEntry = (entry) => ({
 });
 
 const getDutyRoster = asyncHandler(async (req, res) => {
+  const branchAccess = resolveBranchAccess(req);
   const entries = await DutyRosterEntry.find()
-    .populate('staffUser', 'fullName role department')
+    .populate('staffUser', 'fullName role department branchName')
     .sort({ dutyDate: 1, shift: 1, staffName: 1 });
 
-  res.json({ success: true, data: entries.map(serializeDutyRosterEntry) });
+  const filteredEntries =
+    branchAccess.allBranches || !branchAccess.branchName
+      ? entries
+      : entries.filter((entry) => String(entry.staffUser?.branchName || '').trim() === branchAccess.branchName);
+
+  res.json({ success: true, data: filteredEntries.map(serializeDutyRosterEntry) });
 });
 
 const createDutyRosterEntry = asyncHandler(async (req, res) => {
@@ -47,7 +55,7 @@ const createDutyRosterEntry = asyncHandler(async (req, res) => {
 
   const populatedEntry = await DutyRosterEntry.findById(entry._id).populate(
     'staffUser',
-    'fullName role department'
+    'fullName role department branchName'
   );
 
   res.status(201).json({ success: true, data: serializeDutyRosterEntry(populatedEntry) });
@@ -82,7 +90,7 @@ const updateDutyRosterEntry = asyncHandler(async (req, res) => {
 
   const populatedEntry = await DutyRosterEntry.findById(existingEntry._id).populate(
     'staffUser',
-    'fullName role department'
+    'fullName role department branchName'
   );
 
   res.json({ success: true, data: serializeDutyRosterEntry(populatedEntry) });

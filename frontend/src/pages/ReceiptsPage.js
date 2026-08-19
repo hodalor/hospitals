@@ -8,13 +8,22 @@ import DataTable from '../components/tables/DataTable';
 import { isWithinDateRange } from '../utils/dateFilters';
 import { printReceiptDocument } from '../utils/financePrint';
 
-function ReceiptsPage({ data, auth, pricingItems }) {
+function ReceiptsPage({ data, auth, pricingItems, branches }) {
   const [records, setRecords] = useState(data.receipts || []);
   const [searchValue, setSearchValue] = useState('');
+  const [branchFilter, setBranchFilter] = useState('all');
   const [startDateFilter, setStartDateFilter] = useState('');
   const [endDateFilter, setEndDateFilter] = useState('');
   const { showToast } = useToast();
   const branding = useMemo(() => data.branding || {}, [data.branding]);
+
+  const activeBranches = useMemo(
+    () =>
+      (branches || [])
+        .filter((branch) => branch.isActive !== false)
+        .sort((left, right) => left.name.localeCompare(right.name)),
+    [branches]
+  );
 
   useEffect(() => {
     setRecords(data.receipts || []);
@@ -26,6 +35,7 @@ function ReceiptsPage({ data, auth, pricingItems }) {
       { key: 'receiptNo', header: 'Receipt No' },
       { key: 'invoiceNo', header: 'Invoice No' },
       { key: 'patient', header: 'Patient' },
+      { key: 'branchName', header: 'Branch' },
       { key: 'service', header: 'Service' },
       { key: 'amount', header: 'Amount' },
       { key: 'cashier', header: 'Cashier' },
@@ -62,6 +72,7 @@ function ReceiptsPage({ data, auth, pricingItems }) {
           item.receiptNo,
           item.invoiceNo,
           item.patient,
+          item.branchName,
           item.service,
           item.cashier,
           item.channel,
@@ -70,10 +81,11 @@ function ReceiptsPage({ data, auth, pricingItems }) {
           .toLowerCase()
           .includes(searchValue.toLowerCase());
 
+        const matchesBranch = branchFilter === 'all' || item.branchName === branchFilter;
         const matchesDate = isWithinDateRange(item.createdAt || item.date, startDateFilter, endDateFilter);
-        return matchesSearch && matchesDate;
+        return matchesSearch && matchesBranch && matchesDate;
       }),
-    [records, searchValue, startDateFilter, endDateFilter]
+    [records, searchValue, branchFilter, startDateFilter, endDateFilter]
   );
 
   if (!auth.canViewData('billing_records')) {
@@ -97,6 +109,19 @@ function ReceiptsPage({ data, auth, pricingItems }) {
           onSearchChange={setSearchValue}
           searchPlaceholder="Search receipt, invoice, patient, service, cashier, or channel"
           filters={[
+            ...(activeBranches.length > 1
+              ? [
+                  {
+                    label: 'Branch',
+                    value: branchFilter,
+                    onChange: setBranchFilter,
+                    options: [
+                      { label: 'All branches', value: 'all' },
+                      ...activeBranches.map((branch) => ({ label: branch.name, value: branch.name })),
+                    ],
+                  },
+                ]
+              : []),
             {
               label: 'From date',
               value: startDateFilter,

@@ -89,6 +89,7 @@ function PatientsPage({ data, auth, branches, pageMeta }) {
   const [searchValue, setSearchValue] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [genderFilter, setGenderFilter] = useState('all');
+  const [branchFilter, setBranchFilter] = useState('all');
   const [startDateFilter, setStartDateFilter] = useState('');
   const [endDateFilter, setEndDateFilter] = useState('');
   const [profileTab, setProfileTab] = useState('profile');
@@ -161,10 +162,11 @@ function PatientsPage({ data, auth, branches, pageMeta }) {
         .includes(searchValue.toLowerCase());
       const matchesStatus = statusFilter === 'all' || patient.status === statusFilter;
       const matchesGender = genderFilter === 'all' || patient.gender === genderFilter;
+      const matchesBranch = branchFilter === 'all' || patient.createdBranchName === branchFilter;
       const matchesDate = isWithinDateRange(patient.lastVisit, startDateFilter, endDateFilter);
-      return matchesSearch && matchesStatus && matchesGender && matchesDate;
+      return matchesSearch && matchesStatus && matchesGender && matchesBranch && matchesDate;
     });
-  }, [records, searchValue, statusFilter, genderFilter, startDateFilter, endDateFilter]);
+  }, [records, searchValue, statusFilter, genderFilter, branchFilter, startDateFilter, endDateFilter]);
 
   const summaryCards = useMemo(
     () => [
@@ -362,6 +364,19 @@ function PatientsPage({ data, auth, branches, pageMeta }) {
                 { label: 'Other', value: 'Other' },
               ],
             },
+            ...(activeBranches.length > 1
+              ? [
+                  {
+                    label: 'Branch',
+                    value: branchFilter,
+                    onChange: setBranchFilter,
+                    options: [
+                      { label: 'All branches', value: 'all' },
+                      ...activeBranches.map((branch) => ({ label: branch.name, value: branch.name })),
+                    ],
+                  },
+                ]
+              : []),
             {
               label: 'From date',
               value: startDateFilter,

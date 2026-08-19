@@ -1,7 +1,7 @@
 const Patient = require('../models/Patient');
 const Visit = require('../models/Visit');
 const { asyncHandler } = require('../utils/asyncHandler');
-const { resolveBranchAccess } = require('../utils/branchScope');
+const { buildBranchFilter, resolveBranchAccess } = require('../utils/branchScope');
 const { MAIN_BRANCH_NAME } = require('../services/branchService');
 
 const generatePatientNumber = () => `PT-${Date.now().toString().slice(-8)}`;
@@ -137,7 +137,7 @@ const toPatientPayload = (payload) => {
 };
 
 const getPatients = asyncHandler(async (req, res) => {
-  const patients = await Patient.find().sort({ createdAt: -1 });
+  const patients = await Patient.find(buildBranchFilter(req, 'createdBranchName')).sort({ createdAt: -1 });
   res.json({ success: true, data: patients.map(serializePatient) });
 });
 

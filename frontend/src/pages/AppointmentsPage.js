@@ -67,7 +67,7 @@ const appointmentStatusOptions = [
   'Cancelled',
 ];
 
-function AppointmentsPage({ data, auth, users, departments, dutyRoster, onRefreshData, pageMeta }) {
+function AppointmentsPage({ data, auth, users, departments, dutyRoster, branches, onRefreshData, pageMeta }) {
   const [records, setRecords] = useState(data.queue);
   const [form, setForm] = useState(emptyAppointmentForm);
   const [editingAppointmentId, setEditingAppointmentId] = useState(null);
@@ -76,6 +76,7 @@ function AppointmentsPage({ data, auth, users, departments, dutyRoster, onRefres
   const [searchValue, setSearchValue] = useState('');
   const [activeQueueTab, setActiveQueueTab] = useState('booked');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [branchFilter, setBranchFilter] = useState('all');
   const [startDateFilter, setStartDateFilter] = useState('');
   const [endDateFilter, setEndDateFilter] = useState('');
   const [patientLookup, setPatientLookup] = useState('');
@@ -123,6 +124,14 @@ function AppointmentsPage({ data, auth, users, departments, dutyRoster, onRefres
     [departments]
   );
 
+  const activeBranches = useMemo(
+    () =>
+      (branches || [])
+        .filter((branch) => branch.isActive !== false)
+        .sort((left, right) => left.name.localeCompare(right.name)),
+    [branches]
+  );
+
   useEffect(() => {
     setRecords(data.queue);
   }, [data.queue]);
@@ -164,14 +173,15 @@ function AppointmentsPage({ data, auth, users, departments, dutyRoster, onRefres
           .includes(searchValue.toLowerCase());
         const matchesStatus =
           statusFilter === 'all' || appointment.status === statusFilter;
+        const matchesBranch = branchFilter === 'all' || appointment.branchName === branchFilter;
         const matchesDate = isWithinDateRange(
           appointment.appointmentDate,
           startDateFilter,
           endDateFilter
         );
-        return matchesQueueTab && matchesSearch && matchesStatus && matchesDate;
+        return matchesQueueTab && matchesSearch && matchesStatus && matchesBranch && matchesDate;
       }),
-    [activeQueueTab, records, searchValue, statusFilter, startDateFilter, endDateFilter]
+    [activeQueueTab, records, searchValue, statusFilter, branchFilter, startDateFilter, endDateFilter]
   );
 
   const summaryCards = useMemo(
@@ -366,6 +376,19 @@ function AppointmentsPage({ data, auth, users, departments, dutyRoster, onRefres
                   .map((option) => ({ label: option, value: option })),
               ],
             },
+            ...(activeBranches.length > 1
+              ? [
+                  {
+                    label: 'Branch',
+                    value: branchFilter,
+                    onChange: setBranchFilter,
+                    options: [
+                      { label: 'All branches', value: 'all' },
+                      ...activeBranches.map((branch) => ({ label: branch.name, value: branch.name })),
+                    ],
+                  },
+                ]
+              : []),
             {
               label: 'From date',
               value: startDateFilter,
