@@ -15,6 +15,7 @@ const defaultBranding = {
   phoneNumbers: '+260 000 000 000 / +233 000 000 000',
   email: 'finance@healthnova.local',
   logoDataUrl: '',
+  sidebarColor: '#1d3348',
   defaultCurrency: 'GHS',
   currencies: [
     {
@@ -38,6 +39,16 @@ const defaultBranding = {
     },
   ],
 };
+
+function normalizeHexColor(color = '', fallback = defaultBranding.sidebarColor) {
+  const trimmed = String(color || '').trim();
+
+  if (/^#[0-9a-fA-F]{6}$/.test(trimmed)) {
+    return trimmed.toLowerCase();
+  }
+
+  return fallback;
+}
 
 function normalizeCurrencies(currencies = [], defaultCurrency = defaultBranding.defaultCurrency) {
   const seenCodes = new Set();
@@ -87,6 +98,7 @@ const serializeBranding = (branding) => ({
   phoneNumbers: branding?.phoneNumbers || defaultBranding.phoneNumbers,
   email: branding?.email || defaultBranding.email,
   logoDataUrl: branding?.logoDataUrl || '',
+  sidebarColor: normalizeHexColor(branding?.sidebarColor, defaultBranding.sidebarColor),
   defaultCurrency: branding?.defaultCurrency || defaultBranding.defaultCurrency,
   currencies: normalizeCurrencies(
     branding?.currencies?.length ? branding.currencies : defaultBranding.currencies,
@@ -120,6 +132,7 @@ const upsertBranding = asyncHandler(async (req, res) => {
     phoneNumbers: req.body.phoneNumbers || '',
     email: req.body.email || '',
     logoDataUrl: req.body.logoDataUrl || '',
+    sidebarColor: normalizeHexColor(req.body.sidebarColor, existingBranding?.sidebarColor || defaultBranding.sidebarColor),
     defaultCurrency: mainCurrency?.code || defaultBranding.defaultCurrency,
     currencies: normalizedCurrencies,
     branches: normalizedBranches,

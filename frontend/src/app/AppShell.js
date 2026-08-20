@@ -78,6 +78,44 @@ const pageComponents = {
 const workflowQueueKeys = ['cashier', 'doctor', 'lab', 'pharmacy'];
 const completedAppointmentStatuses = ['Completed', 'Cancelled'];
 
+function normalizeHexColor(color = '', fallback = '#1d3348') {
+  const trimmed = String(color || '').trim();
+  return /^#[0-9a-fA-F]{6}$/.test(trimmed) ? trimmed.toLowerCase() : fallback;
+}
+
+function hexToRgb(color) {
+  const normalized = normalizeHexColor(color);
+  return {
+    r: Number.parseInt(normalized.slice(1, 3), 16),
+    g: Number.parseInt(normalized.slice(3, 5), 16),
+    b: Number.parseInt(normalized.slice(5, 7), 16),
+  };
+}
+
+function mixHexColors(baseColor, mixColor, ratio = 0.5) {
+  const base = hexToRgb(baseColor);
+  const mix = hexToRgb(mixColor);
+  const weight = Math.max(0, Math.min(1, ratio));
+  const mixed = ['r', 'g', 'b']
+    .map((channel) => Math.round(base[channel] * (1 - weight) + mix[channel] * weight))
+    .map((value) => value.toString(16).padStart(2, '0'))
+    .join('');
+
+  return `#${mixed}`;
+}
+
+function getRelativeLuminance(color) {
+  const { r, g, b } = hexToRgb(color);
+  const channels = [r, g, b].map((value) => {
+    const normalized = value / 255;
+    return normalized <= 0.03928
+      ? normalized / 12.92
+      : ((normalized + 0.055) / 1.055) ** 2.4;
+  });
+
+  return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+}
+
 function filterVisibleModules(modules, currentUser) {
   return modules.reduce((accumulator, module) => {
     if (module.children?.length) {
@@ -324,6 +362,22 @@ function AppShell({ currentUser, onLogout, onUserChange }) {
 
   const ActivePage = activeModule ? pageComponents[activeModule.id] : DashboardPage;
   const branding = moduleData.settings_config?.branding || moduleData.finance_billing?.branding || {};
+  const sidebarColor = normalizeHexColor(branding.sidebarColor, '#1d3348');
+  const isLightSidebar = getRelativeLuminance(sidebarColor) > 0.62;
+  const sidebarThemeStyle = {
+    '--sidebar-bg-start': sidebarColor,
+    '--sidebar-bg-end': mixHexColors(sidebarColor, isLightSidebar ? '#d8e3ef' : '#0f1d2d', 0.28),
+    '--sidebar-text': isLightSidebar ? '#10233f' : '#dfe9f5',
+    '--sidebar-muted': isLightSidebar ? '#324a67' : '#a8bfd8',
+    '--sidebar-border': isLightSidebar ? 'rgba(16, 35, 63, 0.12)' : 'rgba(255, 255, 255, 0.08)',
+    '--sidebar-hover-bg': isLightSidebar ? 'rgba(16, 35, 63, 0.06)' : 'rgba(255, 255, 255, 0.08)',
+    '--sidebar-active-bg': isLightSidebar ? 'rgba(21, 112, 239, 0.14)' : 'rgba(21, 112, 239, 0.16)',
+    '--sidebar-icon-bg': isLightSidebar ? 'rgba(16, 35, 63, 0.07)' : 'rgba(255, 255, 255, 0.08)',
+    '--sidebar-icon-color': isLightSidebar ? '#124170' : '#6db3f3',
+    '--sidebar-caret-color': isLightSidebar ? '#516984' : '#a8bfd8',
+    '--sidebar-accent-start': isLightSidebar ? '#0fb5ae' : '#0fb5ae',
+    '--sidebar-accent-end': isLightSidebar ? '#1570ef' : '#1570ef',
+  };
   const branchOptions = branding.branches?.length
     ? branding.branches.filter((branch) => branch.isActive !== false)
     : currentUser?.branchName
@@ -376,7 +430,7 @@ function AppShell({ currentUser, onLogout, onUserChange }) {
   }
 
   return (
-    <div className="app-shell">
+    <div className="app-shell" style={sidebarThemeStyle}>
       {isBranchLoading ? (
         <div className="branch-loading-overlay" role="status" aria-live="polite" aria-busy="true">
           <div className="branch-loading-card">

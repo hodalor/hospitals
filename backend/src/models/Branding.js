@@ -38,6 +38,11 @@ const brandingSchema = new mongoose.Schema(
       default: '',
       trim: true,
     },
+    sidebarColor: {
+      type: String,
+      default: '#1d3348',
+      trim: true,
+    },
     defaultCurrency: {
       type: String,
       default: 'GHS',

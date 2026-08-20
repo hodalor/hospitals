@@ -110,6 +110,7 @@ const emptyBrandingForm = {
   phoneNumbers: '',
   email: '',
   logoDataUrl: '',
+  sidebarColor: '#1d3348',
   defaultCurrency: 'GHS',
   currencies: [
     {
@@ -156,6 +157,18 @@ const emptyCurrencyForm = {
   isDefault: false,
   isActive: true,
 };
+
+function isLightHexColor(color = '#1d3348') {
+  const normalized = /^#[0-9a-fA-F]{6}$/.test(String(color || '').trim())
+    ? String(color || '').trim()
+    : '#1d3348';
+  const red = Number.parseInt(normalized.slice(1, 3), 16);
+  const green = Number.parseInt(normalized.slice(3, 5), 16);
+  const blue = Number.parseInt(normalized.slice(5, 7), 16);
+  const luminance = (0.2126 * red + 0.7152 * green + 0.0722 * blue) / 255;
+
+  return luminance > 0.62;
+}
 
 function SettingsPage({ data, auth, users, onRefreshData, pageMeta }) {
   const brandingSnapshotKey = JSON.stringify(data.branding || {});
@@ -297,6 +310,7 @@ function SettingsPage({ data, auth, users, onRefreshData, pageMeta }) {
   );
 
   const canManageCurrencies = Boolean(auth.currentUser?.isMasterTenant && auth.canDoAction('manage_users'));
+  const isLightSidebarPreview = isLightHexColor(brandingForm.sidebarColor);
 
   if (!auth.canViewData('department_records')) {
     return (
@@ -381,7 +395,12 @@ function SettingsPage({ data, auth, users, onRefreshData, pageMeta }) {
     const { name, value } = event.target;
     setBrandingForm((current) => ({
       ...current,
-      [name]: value,
+      [name]:
+        name === 'sidebarColor'
+          ? /^#[0-9a-fA-F]{0,6}$/.test(String(value || '').trim())
+            ? String(value || '').trim()
+            : current.sidebarColor
+          : value,
     }));
   };
 
@@ -895,20 +914,53 @@ function SettingsPage({ data, auth, users, onRefreshData, pageMeta }) {
                   <input value={brandingForm.defaultCurrency || 'GHS'} disabled />
                 </label>
                 <label className="form-field">
+                  <span>Sidebar Color</span>
+                  <div className="branding-color-control">
+                    <input
+                      type="color"
+                      name="sidebarColor"
+                      value={brandingForm.sidebarColor || '#1d3348'}
+                      onChange={handleBrandingFormChange}
+                      className="branding-color-picker"
+                    />
+                    <input
+                      name="sidebarColor"
+                      value={brandingForm.sidebarColor || '#1d3348'}
+                      onChange={handleBrandingFormChange}
+                      placeholder="#1d3348"
+                      maxLength={7}
+                    />
+                  </div>
+                </label>
+                <label className="form-field">
                   <span>Hospital Logo</span>
                   <input type="file" accept="image/*" onChange={handleBrandingLogoChange} />
                 </label>
                 <div className="form-field">
                   <span>Preview</span>
-                  {brandingForm.logoDataUrl ? (
-                    <img
-                      src={brandingForm.logoDataUrl}
-                      alt="Hospital branding"
-                      className="branding-preview"
-                    />
-                  ) : (
-                    <div className="branding-preview branding-preview-empty">No logo uploaded</div>
-                  )}
+                  <div className="branding-preview-stack">
+                    {brandingForm.logoDataUrl ? (
+                      <img
+                        src={brandingForm.logoDataUrl}
+                        alt="Hospital branding"
+                        className="branding-preview"
+                      />
+                    ) : (
+                      <div className="branding-preview branding-preview-empty">No logo uploaded</div>
+                    )}
+                    <div
+                      className="branding-color-preview"
+                      style={{
+                        background: brandingForm.sidebarColor || '#1d3348',
+                        color: isLightSidebarPreview ? '#10233f' : '#ffffff',
+                        boxShadow: isLightSidebarPreview
+                          ? 'inset 0 0 0 1px rgba(16, 35, 63, 0.14)'
+                          : 'inset 0 0 0 1px rgba(255, 255, 255, 0.14)',
+                      }}
+                    >
+                      Sidebar Color Preview
+                    </div>
+                  </div>
                 </div>
               </div>
 
